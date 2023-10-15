@@ -1,0 +1,41 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - base/namespace.yaml
+  - base/service-account.yaml
+  - base/role.yaml
+  - base/role-binding.yaml
+  - base/service.yaml
+  - base/deployment.yaml
+
+namespace: smtp-relay
+
+commonLabels:
+  app.kubernetes.io/name: smtp-relay
+  app.kubernetes.io/part-of: smtp-relay
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/instance: smtp-relay
+  app.kubernetes.io/component: smtp-relay
+  app.kubernetes.io/version: "1.2.0"
+
+configMapGenerator:
+  - name: smtp-relay-env
+    namespace: smtp-relay
+    literals:
+      - SMTP_SERVER_HOSTNAME=0.0.0.0
+      - SMTP_SERVER_PORT=8025
+      - LOG_LEVEL=info
+      - SMTP_SERVICE=mailjet
+
+secretGenerator:
+  - name: smtp-relay-secret
+    type: Opaque
+    namespace: smtp-relay
+    env: .env
+
+images:
+  - name: sbordeyne/smtprelay
+    newName: sbordeyne/smtprelay
+    newTag: 1.2.0

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smtp-relay
+  namespace: smtp-relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: smtp-relay
+      app.kubernetes.io/instance: smtp-relay
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: smtp-relay
+        app.kubernetes.io/instance: smtp-relay
+    spec:
+      serviceAccountName: smtp-relay
+      containers:
+        - name: smtp-relay
+          image: sbordeyne/smtprelay:latest
+          imagePullPolicy: Always
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          envFrom:
+          - configMapRef:
+              name: smtp-relay-env
+          - secretRef:
+              name: smtp-relay-secret
+          ports:
+            - name: smtp
+              containerPort: 8025
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 8025
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 8025
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
